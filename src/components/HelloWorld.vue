@@ -71,7 +71,7 @@
                     hide-details
                     :items="items"
                     :item-text="'name'"
-                    :item-value="'name'"
+                    :item-value="'id'"
                     outlined
                     label="Select job owner"
                     dense
@@ -124,12 +124,13 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr v-for="(summary, index) in summaries"
+                :key="index">
                     <td class="pt-4 pb-4">
-                      {{ sum }}
+                      {{ summary.sum }}
                     </td>
                     <td>
-                      {{ jobOwner }}
+                      {{ getJobOwnerName(summary.jobOwner) }}
                     </td>
                   </tr>
                 </tbody>
@@ -175,6 +176,7 @@ export default {
         },
       ],
       items: [],
+      summaries: [],
     };
   },
   mounted() {
@@ -191,17 +193,26 @@ export default {
   methods: {
     handleMoveNextStep() {
       this.e1 = 2;
-      const sum = this.rows.reduce(
-        (accumulator, object) => accumulator + parseFloat(object.amount),
-        0,
-      );
-      this.sum = sum;
+      const summaries = [];
+      this.items.forEach((item) => {
+        const rows = this.rows.filter((row) => row.jobOwner === item.id);
+        if (rows.length > 0) {
+          const sum = rows.reduce(
+            (accumulator, object) => accumulator + parseFloat(object.amount),
+            0,
+          );
+          const summary = {
+            sum,
+            jobOwner: rows[0].jobOwner,
+          };
+          summaries.push(summary);
+        }
+      });
 
-      const jobOwners = this.rows.reduce(
-        (accumulator, object) => `${accumulator}, ${object.jobOwner}`,
-        '',
-      );
-      this.jobOwner = jobOwners.slice(1);
+      this.summaries = summaries;
+    },
+    getJobOwnerName(id) {
+      return this.items.find((row) => row.id === id).name;
     },
     removeRow(row) {
       this.rows.splice(this.rows.indexOf(row), 1);
